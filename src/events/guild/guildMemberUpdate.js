@@ -1,16 +1,26 @@
 // Dependencies
 const { Embed } = require('../../utils'),
-	{ MutedMemberSchema } = require('../../database/models'),
 	Event = require('../../structures/Event');
 
-module.exports = class guildMemberUpdate extends Event {
+/**
+ * Guild member update event
+ * @event Egglord#GuildMemberUpdate
+ * @extends {Event}
+*/
+class GuildMemberUpdate extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildMember} oldMember The member before the update
+	 * @param {GuildMember} newMember The member after the update
+	 * @readonly
+	*/
 	async run(bot, oldMember, newMember) {
 		// For debugging
 		if (bot.config.debug) bot.logger.debug(`Member: ${newMember.user.tag} has been updated in guild: ${newMember.guild.id}.`);
@@ -25,7 +35,7 @@ module.exports = class guildMemberUpdate extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event channelCreate is for logging
-		if (settings.ModLogEvents.includes('GUILDMEMBERUPDATE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('GUILDMEMBERUPDATE') && settings.ModLog) {
 			let embed, updated = false;
 
 			// nickname change
@@ -61,7 +71,7 @@ module.exports = class guildMemberUpdate extends Event {
 				updated = true;
 			}
 
-			// Look to see if user has changed their surname
+			// Look to see if user has changed their username
 			if (oldMember.username !== newMember.username) {
 				embed = new Embed(bot, newMember.guild)
 					.setDescription(`**username changed of ${newMember.toString()}**`)
@@ -81,11 +91,11 @@ module.exports = class guildMemberUpdate extends Event {
 			const rolesRemoved = oldMember.roles.cache.filter(x => !newMember.roles.cache.get(x.id));
 			if (rolesAdded.size != 0 || rolesRemoved.size != 0) {
 				const roleAddedString = [];
-				for (const role of rolesAdded.array()) {
+				for (const role of [...rolesAdded.values()]) {
 					roleAddedString.push(role.toString());
 				}
 				const roleRemovedString = [];
-				for (const role of rolesRemoved.array()) {
+				for (const role of [...rolesRemoved.values()]) {
 					roleRemovedString.push(role.toString());
 				}
 				embed = new Embed(bot, newMember.guild)
@@ -113,10 +123,13 @@ module.exports = class guildMemberUpdate extends Event {
 		// check if member lost mute role manually
 		if (oldMember.roles.cache.filter(x => !newMember.roles.cache.get(x.id)).map(r => r.id).includes(settings.MutedRole)) {
 			try {
-				await MutedMemberSchema.findOneAndRemove({ userID: newMember.user.id, guildID: newMember.guild.id });
+				await newMember.guild.updateGuild({ MutedMembers: settings.MutedMembers.filter(user => user != newMember.user.id) });
+				settings.MutedMembers.filter(user => user != newMember.user.id);
 			} catch (err) {
 				bot.logger.error(`${newMember.user.id}`);
 			}
 		}
 	}
-};
+}
+
+module.exports = GuildMemberUpdate;

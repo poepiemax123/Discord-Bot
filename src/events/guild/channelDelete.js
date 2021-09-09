@@ -1,18 +1,36 @@
 // Dependencies
 const { Embed } = require('../../utils'),
+	types = {
+		GUILD_TEXT: 'Text',
+		GUILD_VOICE: 'Voice',
+		GUILD_CATEGORY: 'Category',
+		GUILD_STAGE_VOICE: 'Stage',
+		GUILD_NEWS: 'Annoucement',
+		GUILD_STORE: 'Store',
+	},
 	Event = require('../../structures/Event');
 
-module.exports = class channelDelete extends Event {
+/**
+ * Channel delete event
+ * @event Egglord#ChannelDelete
+ * @extends {Event}
+*/
+class ChannelDelete extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildChannel|DMChannel} channel The channel that was deleted
+	 * @readonly
+	*/
 	async run(bot, channel) {
 	// For debugging
-		if (bot.config.debug) bot.logger.debug(`Channel: ${channel.type == 'dm' ? channel.recipient.tag : channel.name} has been deleted${channel.type == 'dm' ? '' : ` in guild: ${channel.guild.id}`}. (${channel.type})`);
+		if (bot.config.debug) bot.logger.debug(`Channel: ${channel.type == 'dm' ? channel.recipient.tag : channel.name} has been deleted${channel.type == 'dm' ? '' : ` in guild: ${channel.guild.id}`}. (${types[channel.type]})`);
 
 		// Don't really know but a check for DM must be made
 		if (channel.type == 'dm') return;
@@ -23,12 +41,12 @@ module.exports = class channelDelete extends Event {
 
 		// IF it's a ticket channel and TICKET logging is enabled then don't show CHANNELDELETE log
 		const regEx = /ticket-\d{18}/g;
-		if (regEx.test(channel.name) && settings.ModLogEvents.includes('TICKET')) return bot.emit('ticketClose', channel);
+		if (regEx.test(channel.name) && settings.ModLogEvents?.includes('TICKET')) return bot.emit('ticketClose', channel);
 
 		// Check if event channelDelete is for logging
-		if (settings.ModLogEvents.includes('CHANNELDELETE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('CHANNELDELETE') && settings.ModLog) {
 			const embed = new Embed(bot, channel.guild)
-				.setDescription(`**${channel.type.charAt(0).toUpperCase() + channel.type.slice(1)} channel deleted: ${'#' + channel.name}**`)
+				.setDescription(`**${types[channel.type]} channel deleted: ${'#' + channel.name}**`)
 				.setColor(15158332)
 				.setFooter(`ID: ${channel.id}`)
 				.setAuthor(bot.user.username, bot.user.displayAvatarURL())
@@ -43,4 +61,6 @@ module.exports = class channelDelete extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = ChannelDelete;

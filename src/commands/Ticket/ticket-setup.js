@@ -2,7 +2,15 @@
 const { Embed } = require('../../utils'),
 	Command = require('../../structures/Command.js');
 
-module.exports = class TicketSetup extends Command {
+/**
+ * Ticket setup command
+ * @extends {Command}
+*/
+class TicketSetup extends Command {
+	/**
+ 	 * @param {Client} client The instantiating client
+ 	 * @param {CommandData} data The data for the command
+	*/
 	constructor(bot) {
 		super(bot, {
 			name: 'ticket-setup',
@@ -18,7 +26,13 @@ module.exports = class TicketSetup extends Command {
 		});
 	}
 
-	// Run command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+	*/
 	async run(bot, message, settings) {
 		// will setup the ticket command
 		if (!message.args[0]) {
@@ -31,10 +45,9 @@ module.exports = class TicketSetup extends Command {
 			// update category channel
 			try {
 				const channel = message.guild.channels.cache.get(message.args[1]);
-				if (!channel || channel.type != 'category') return message.channel.send(message.translate('ticket/ticket-setup:NOT_CATEGORY'));
+				if (!channel || channel.type != 'GUILD_CATEGORY') return message.channel.send(message.translate('ticket/ticket-setup:NOT_CATEGORY'));
 				// update database
 				await message.guild.updateGuild({ TicketCategory: message.args[1] });
-				settings.TicketCategory = message.args[1];
 				message.channel.send(message.translate('ticket/ticket-setup:UPDATED_CATEGORY', { NAME: channel.name }));
 			} catch (err) {
 				if (message.deletable) message.delete();
@@ -49,7 +62,6 @@ module.exports = class TicketSetup extends Command {
 				if (!supportRole) return message.channel.send(message.translate('ticket/ticket-setup:NOT_ROLE'));
 				// update database
 				await message.guild.updateGuild({ TicketSupportRole: message.args[1] });
-				settings.TicketSupportRole = message.args[1];
 				message.channel.send(message.translate('ticket/ticket-setup:UPDATED_ROLE').replace('{ROLE}', supportRole));
 			} catch (err) {
 				if (message.deletable) message.delete();
@@ -58,4 +70,6 @@ module.exports = class TicketSetup extends Command {
 			}
 		}
 	}
-};
+}
+
+module.exports = TicketSetup;

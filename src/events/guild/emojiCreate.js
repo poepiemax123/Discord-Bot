@@ -2,14 +2,24 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class emojiCreate extends Event {
+/**
+ * Emoji create event
+ * @event Egglord#EmojiCreate
+ * @extends {Event}
+*/
+class EmojiCreate extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildEmoji} emoji The emoji that was created
+	 * @readonly
+	*/
 	async run(bot, emoji) {
 		// For debugging
 		if (bot.config.debug) bot.logger.debug(`Emoji: ${emoji.name} has been created in guild: ${emoji.guild.id}.`);
@@ -19,7 +29,7 @@ module.exports = class emojiCreate extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event emojiCreate is for logging
-		if (settings.ModLogEvents.includes('EMOJICREATE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('EMOJICREATE') && settings.ModLog) {
 			const embed = new Embed(bot, emoji.guild)
 				.setDescription(`**Emoji: ${emoji} (${emoji.name}) was created**`)
 				.setColor(3066993)
@@ -36,4 +46,6 @@ module.exports = class emojiCreate extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = EmojiCreate;

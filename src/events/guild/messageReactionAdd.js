@@ -1,16 +1,27 @@
 // Dependencies
 const { Embed } = require('../../utils'),
-	{ ReactionRoleSchema, ticketEmbedSchema } = require('../../database/models'),
+	{ ReactionRoleSchema } = require('../../database/models'),
 	Event = require('../../structures/Event');
 
-module.exports = class messageReactionAdd extends Event {
+/**
+ * Message reaction add event
+ * @event Egglord#MessageReactionAdd
+ * @extends {Event}
+*/
+class MessageReactionAdd extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {MessageReaction} reaction The reaction object
+	 * @param {User} user The user that added the reaction
+	 * @readonly
+	*/
 	async run(bot, reaction, user) {
 		// For debugging
 		if (bot.config.debug) bot.logger.debug(`Message reaction added${!reaction.message.guild ? '' : ` in guild: ${reaction.message.guild.id}`}`);
@@ -31,29 +42,13 @@ module.exports = class messageReactionAdd extends Event {
 		const settings = reaction.message.guild.settings;
 		if (Object.keys(settings).length == 0) return;
 
-		// Check for ticket embed
-		if (reaction.emoji.name == '🎟') {
-			const ticketReaction = await ticketEmbedSchema.findOne({
-				messageID: reaction.message.id,
-				channelID: reaction.message.channel.id,
-				guildID: reaction.message.guild.id,
-			});
-
-			// ticket found
-			if (ticketReaction) {
-				reaction.message.author = user;
-				if (reaction.message.channel.permissionsFor(bot.user).has('MANAGE_MESSAGES')) await reaction.users.remove(user);
-				return bot.commands.get('ticket-create').run(bot, reaction.message, settings);
-			}
-		}
-
 		// Check for reaction
 		const { guild } = reaction.message;
 		// eslint-disable-next-line no-empty-function
 		const member = await guild.members.fetch(user.id).catch(() => {});
 		if (!member) return;
 
-		// fetch database
+		// check database if reaction is from reaction role embed
 		const dbReaction = await ReactionRoleSchema.findOne({
 			guildID: guild.id,
 			messageID: reaction.message.id,
@@ -81,7 +76,7 @@ module.exports = class messageReactionAdd extends Event {
 		if (reaction.message.author.id == bot.user.id) return;
 
 		// Check if event messageReactionAdd is for logging
-		if (settings.ModLogEvents.includes('MESSAGEREACTIONADD') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('MESSAGEREACTIONADD') && settings.ModLog) {
 			const embed = new Embed(bot, reaction.message.guild)
 				.setDescription(`**${user.toString()} reacted with ${reaction.emoji.toString()} to [this message](${reaction.message.url})** `)
 				.setColor(3066993)
@@ -98,4 +93,6 @@ module.exports = class messageReactionAdd extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = MessageReactionAdd;

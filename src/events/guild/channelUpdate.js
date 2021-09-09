@@ -1,31 +1,51 @@
 // Dependencies
 const { Embed } = require('../../utils'),
+	types = {
+		GUILD_TEXT: 'Text',
+		GUILD_VOICE: 'Voice',
+		GUILD_CATEGORY: 'Category',
+		GUILD_STAGE_VOICE: 'Stage',
+		GUILD_NEWS: 'Annoucement',
+		GUILD_STORE: 'Store',
+	},
 	Event = require('../../structures/Event');
 
-module.exports = class channelUpdate extends Event {
+
+/**
+ * Channel update event
+ * @event Egglord#ChannelDelete
+ * @extends {Event}
+*/
+class ChannelUpdate extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildChannel|DMChannel} oldChannel The channel before the update
+	 * @param {GuildChannel|DMChannel} newChannel The channel after the update
+	 * @readonly
+	*/
 	async run(bot, oldChannel, newChannel) {
 		// For debugging
-		if (bot.config.debug) bot.logger.debug(`Channel: ${newChannel.type == 'dm' ? newChannel.recipient.tag : newChannel.name} has been updated${newChannel.type == 'dm' ? '' : ` in guild: ${newChannel.guild.id}`}. (${newChannel.type})`);
+		if (bot.config.debug) bot.logger.debug(`Channel: ${newChannel.type == 'dm' ? newChannel.recipient.tag : newChannel.name} has been updated${newChannel.type == 'dm' ? '' : ` in guild: ${newChannel.guild.id}`}. (${types[newChannel.type]})`);
 
 		// Get server settings / if no settings then return
 		const settings = newChannel.guild.settings;
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event channelDelete is for logging
-		if (settings.ModLogEvents.includes('CHANNELUPDATE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('CHANNELUPDATE') && settings.ModLog) {
 			let embed, updated = false;
 
 			// Channel name change
 			if (oldChannel.name != newChannel.name) {
 				embed = new Embed(bot, newChannel.guild)
-					.setDescription(`**${newChannel.type === 'category' ? 'Category' : 'Channel'} name changed of ${newChannel.toString()}**`)
+					.setDescription(`**${newChannel.type === 'GUILD_CATEGORY' ? 'Category' : 'Channel'} name changed of ${newChannel.toString()}**`)
 					.setColor(15105570)
 					.setFooter(`ID: ${newChannel.id}`)
 					.setAuthor(newChannel.guild.name, newChannel.guild.iconURL())
@@ -40,7 +60,7 @@ module.exports = class channelUpdate extends Event {
 			// channel topic (description) change
 			if (oldChannel.topic != newChannel.topic) {
 				embed = new Embed(bot, newChannel.guild)
-					.setDescription(`**${newChannel.type === 'category' ? 'Category' : 'Channel'} topic changed of ${newChannel.toString()}**`)
+					.setDescription(`**${newChannel.type === 'GUILD_CATEGORY' ? 'Category' : 'Channel'} topic changed of ${newChannel.toString()}**`)
 					.setColor(15105570)
 					.setFooter(`ID: ${newChannel.id}`)
 					.setAuthor(newChannel.guild.name, newChannel.guild.iconURL())
@@ -54,7 +74,7 @@ module.exports = class channelUpdate extends Event {
 
 			if (oldChannel.rtcRegion != newChannel.rtcRegion) {
 				embed = new Embed(bot, newChannel.guild)
-					.setDescription(`**${newChannel.type === 'category' ? 'Category' : 'Channel'} region changed of ${newChannel.toString()}**`)
+					.setDescription(`**${newChannel.type === 'GUILD_CATEGORY' ? 'Category' : 'Channel'} region changed of ${newChannel.toString()}**`)
 					.setColor(15105570)
 					.setFooter(`ID: ${newChannel.id}`)
 					.setAuthor(newChannel.guild.name, newChannel.guild.iconURL())
@@ -81,15 +101,15 @@ module.exports = class channelUpdate extends Event {
 
 			if (permDiff.size) {
 				embed = new Embed(bot, newChannel.guild)
-					.setDescription(`**${newChannel.type === 'category' ? 'Category' : 'Channel'} permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`)
+					.setDescription(`**${newChannel.type === 'GUILD_CATEGORY' ? 'Category' : 'Channel'} permissions changed of ${newChannel.toString()}**\n*note:* check [docs](https://discordapp.com/developers/docs/topics/permissions) to see what the numbers mean`)
 					.setColor(15105570)
 					.setFooter(`ID: ${newChannel.id}`)
 					.setAuthor(newChannel.guild.name, newChannel.guild.iconURL())
 					.setTimestamp();
 				for (const permID of permDiff.keys()) {
 					// load both overwrites into variables
-					const oldPerm = oldChannel.permissionOverwrites.get(permID) || {};
-					const newPerm = newChannel.permissionOverwrites.get(permID) || {};
+					const oldPerm = oldChannel.permissionOverwrites.cache.get(permID) || {};
+					const newPerm = newChannel.permissionOverwrites.cache.get(permID) || {};
 					const oldBitfields = {
 						allowed: oldPerm.allow ? oldPerm.allow.bitfield : 0,
 						denied: oldPerm.deny ? oldPerm.deny.bitfield : 0,
@@ -136,4 +156,6 @@ module.exports = class channelUpdate extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = ChannelUpdate;

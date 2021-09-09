@@ -1,7 +1,15 @@
 // Dependencies
 const	Command = require('../../structures/Command.js');
 
-module.exports = class G_delete extends Command {
+/**
+ * Giveaway delete command
+ * @extends {Command}
+*/
+class GiveawayDelete extends Command {
+	/**
+   * @param {Client} client The instantiating client
+   * @param {CommandData} data The data for the command
+  */
 	constructor(bot) {
 		super(bot, {
 			name: 'g-delete',
@@ -17,7 +25,13 @@ module.exports = class G_delete extends Command {
 		});
 	}
 
-	// Function for message command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+  */
 	async run(bot, message, settings) {
 		// Delete message
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
@@ -36,4 +50,6 @@ module.exports = class G_delete extends Command {
 			message.channel.send(bot.translate('giveaway/g-delete:UNKNOWN_GIVEAWAY', { ID: messageID }));
 		});
 	}
-};
+}
+
+module.exports = GiveawayDelete;

@@ -1,8 +1,15 @@
 // Dependencies
-const { MutedMemberSchema } = require('../../database/models'),
-	Command = require('../../structures/Command.js');
+const Command = require('../../structures/Command.js');
 
-module.exports = class Unmute extends Command {
+/**
+ * Unmute command
+ * @extends {Command}
+*/
+class Unmute extends Command {
+	/**
+ 	 * @param {Client} client The instantiating client
+ 	 * @param {CommandData} data The data for the command
+	*/
 	constructor(bot) {
 		super(bot, {
 			name:  'unmute',
@@ -18,7 +25,13 @@ module.exports = class Unmute extends Command {
 		});
 	}
 
-	// Function for message command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+	*/
 	async run(bot, message, settings) {
 		// Delete message
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
@@ -42,7 +55,8 @@ module.exports = class Unmute extends Command {
 			members[0].roles.remove(muteRole);
 
 			// delete muted member from database
-			await MutedMemberSchema.findOneAndRemove({ userID: members[0].user.id,	guildID: message.guild.id });
+			await message.guild.updateGuild({ MutedMembers: settings.MutedMembers.filter(user => user != members[0].user.id) });
+			settings.MutedMembers.filter(user => user != members[0].user.id);
 
 			// if in a VC unmute them
 			if (members[0].voice.channelID) await members[0].voice.setMute(false);
@@ -54,4 +68,6 @@ module.exports = class Unmute extends Command {
 			message.channel.error('misc:ERROR_MESSAGE', { ERROR: err.message }).then(m => m.timedDelete({ timeout: 5000 }));
 		}
 	}
-};
+}
+
+module.exports = Unmute;

@@ -1,98 +1,28 @@
 // Dependencies
-const mongoose = require('mongoose'),
-	logger = require('../utils/logger'),
-	config = require('../config.js'),
-	{ Guild } = require('../modules/database/models');
+const	{ logger } = require('../utils'),
+	{ GuildSchema } = require('../database/models');
 
-module.exports = async () => {
-	mongoose.connect(config.MongoDBURl, { useUnifiedTopology: true, useNewUrlParser: true }).then(async () => {
-		logger.log('Updating database');
-		await Guild.updateMany({ version: '1.1' }, [
-			{ $set: { automoderation: {
-				enabled: false,
-				badwords: {
-					enabled: false,
-					word: [],
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				ServerInvites: {
-					enabled: false,
-					Invites: [],
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				ExternalLinks: {
-					enabled: false,
-					URLs: [],
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				SpammedCaps: {
-					enabled: false,
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				ExcessiveEmojis: {
-					enabled: false,
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				MassMention: {
-					enabled: false,
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-				Attachments: {
-					enabled: false,
-					limit: 5,
-					channels: [],
-					roles: [],
-					punishmentLevel: 1,
-				},
-			} } },
-			{ $unset: [	'ModerationBadwords',
-				'ModerationBadwordChannel',
-				'ModerationBadwordRole',
-				'ModerationBadwordList',
-				'ModerationRepeatedText',
-				'ModerationRepeatedTextChannel',
-				'ModerationRepeatedTextRole',
-				'ModerationServerInvites',
-				'ModerationServerInvitesChannel',
-				'ModerationServerInvitesRole',
-				'ModerationExternalLinks',
-				'ModerationExternalLinksChannel',
-				'ModerationExternalLinksRole',
-				'ModerationExternalLinksAllowed',
-				'ModerationSpammedCaps',
-				'ModerationSpammedCapsChannel',
-				'ModerationSpammedCapsRole',
-				'ModerationSpammedCapsPercentage',
-				'ModerationExcessiveEmojis',
-				'ModerationExcessiveEmojisChannel',
-				'ModerationExcessiveEmojisRole',
-				'ModerationExcessiveEmojiPercentage',
-				'ModerationMassSpoilers',
-				'ModerationMassSpoilersChannel',
-				'ModerationMassSpoilersRole',
-				'ModerationMassSpoilersPercentage',
-				'ModerationMassMention',
-				'ModerationMassMentionChannel',
-				'ModerationMassMentionRole',
-				'ModerationMassMentionNumber',
-				'ModerationZalgo',
-				'ModerationZalgoChannel',
-				'ModerationZalgoRole',
+module.exports.run = async () => {
+	logger.log('Updating database');
+	try {
+		const resp = await GuildSchema.updateMany({ version: '1.1' }, [
+			{ $set: { version: '1.2', MutedMembers: [] } },
+			{ $unset: [	'ModerationBadwords', 'ModerationBadwordChannel', 'ModerationBadwordRole', 'ModerationBadwordList',
+				'ModerationRepeatedText', 'ModerationRepeatedTextChannel', 'ModerationRepeatedTextRole', 'ModerationServerInvites',
+				'ModerationServerInvitesChannel', 'ModerationServerInvitesRole', 'ModerationExternalLinks', 'ModerationExternalLinksChannel',
+				'ModerationExternalLinksRole', 'ModerationExternalLinksAllowed', 'ModerationSpammedCaps', 'ModerationSpammedCapsChannel',
+				'ModerationSpammedCapsRole', 'ModerationSpammedCapsPercentage', 'ModerationExcessiveEmojis', 'ModerationExcessiveEmojisChannel',
+				'ModerationExcessiveEmojisRole', 'ModerationExcessiveEmojiPercentage', 'ModerationMassSpoilers', 'ModerationMassSpoilersChannel',
+				'ModerationMassSpoilersRole', 'ModerationMassSpoilersPercentage', 'ModerationMassMention', 'ModerationMassMentionChannel',
+				'ModerationMassMentionRole', 'ModerationMassMentionNumber', 'ModerationZalgo', 'ModerationZalgoChannel', 'ModerationZalgoRole',
+				'ServerStats', 'ServerStatsCate', 'ServerStatsBot', 'ServerStatsBotChannel', 'ServerStatsUse', 'ServerStatsUserChannel',
+				'ServerStatsHuman', 'ServerStatsHumanChannel', 'DisabledCommands', 'AntiRaidPlugin', 'AntiRaidCompletion', 'AntiRaidChannelID',
+				'ReportToggle', 'CommandChannelToggle', 'CommandChannels', 'CommandCooldown', 'CommandCooldownSec', 'MusicTriviaPlugin',
+				'MusicTriviaGenres',
 			] }]);
-		logger.ready('Database has been updated to v1.1');
-	}).catch((err) => {
+		logger.ready('Database has been updated to v1.2');
+		return resp;
+	} catch (err) {
 		console.log(err);
-	});
+	}
 };

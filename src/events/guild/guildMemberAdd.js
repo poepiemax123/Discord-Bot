@@ -1,16 +1,25 @@
 // Dependencies
 const { Embed } = require('../../utils'),
-	{ MutedMemberSchema } = require('../../database/models'),
 	Event = require('../../structures/Event');
 
-module.exports = class guildMemberAdd extends Event {
+/**
+ * Guild member add event
+ * @event Egglord#GuildMemberAdd
+ * @extends {Event}
+*/
+class GuildMemberAdd extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildMember} member The member that has joined a guild
+	 * @readonly
+	*/
 	async run(bot, member) {
 	// For debugging
 		if (bot.config.debug) bot.logger.debug(`Member: ${member.user.tag} has been joined guild: ${member.guild.id}.`);
@@ -22,7 +31,7 @@ module.exports = class guildMemberAdd extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event guildMemberAdd is for logging
-		if (settings.ModLogEvents.includes('GUILDMEMBERADD') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('GUILDMEMBERADD') && settings.ModLog) {
 			const embed = new Embed(bot, member.guild)
 				.setDescription(`${member.toString()}\nMember count: ${member.guild.memberCount}`)
 				.setColor(3066993)
@@ -57,8 +66,7 @@ module.exports = class guildMemberAdd extends Event {
 		}
 
 		// Check if member is trying to mute evade
-		const muteOrNot = await MutedMemberSchema.findOne({ userID: member.user.id, guildID: member.guild.id });
-		if (muteOrNot) {
+		if (settings.MutedMembers.includes(member.user.id)) {
 			try {
 				await member.roles.add(settings.MutedRole);
 			} catch (err) {
@@ -66,4 +74,6 @@ module.exports = class guildMemberAdd extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = GuildMemberAdd;

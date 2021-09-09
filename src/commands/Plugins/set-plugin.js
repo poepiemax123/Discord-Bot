@@ -2,9 +2,15 @@
 const { Embed } = require('../../utils'),
 	Command = require('../../structures/Command.js');
 
-const defaultPlugins = ['Fun', 'Giveaway', 'Guild', 'Image', 'Level', 'Misc', 'Moderation', 'Music', 'NSFW', 'Plugins', 'Searcher', 'Ticket', 'Tags'];
-
-module.exports = class SetPlugin extends Command {
+/**
+ * set plugin command
+ * @extends {Command}
+*/
+class SetPlugin extends Command {
+	/**
+ * @param {Client} client The instantiating client
+ * @param {CommandData} data The data for the command
+*/
 	constructor(bot) {
 		super(bot, {
 			name: 'set-plugin',
@@ -16,12 +22,21 @@ module.exports = class SetPlugin extends Command {
 			description: 'Toggle plugins on and off',
 			usage: 'set-plugin <option>',
 			cooldown: 5000,
-			examples: ['set-plugin <option>'],
+			examples: ['set-plugin', 'setplugin Giveaway'],
 		});
 	}
 
-	// Run command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+  */
 	async run(bot, message, settings) {
+		// Get all the command categories
+		const defaultPlugins = bot.commands.map(c => c.help.category).filter((v, i, a) => a.indexOf(v) === i && v != 'Host');
+
 		// Delete message
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
 
@@ -30,7 +45,7 @@ module.exports = class SetPlugin extends Command {
 			const embed = new Embed(bot, message.guild)
 				.setTitle('Plugins')
 				.setDescription([
-					`Available plugins: \`${defaultPlugins.join('`, `') }\`.`,
+					`Available plugins: \`${defaultPlugins.filter(item => !settings.plugins.includes(item)).join('`, `') }\`.`,
 					'',
 					`Active plugins: \`${settings.plugins.join('`, `') }\`.`,
 				].join('\n'));
@@ -56,6 +71,7 @@ module.exports = class SetPlugin extends Command {
 					console.log(err);
 				}
 				message.channel.success('plugins/set-plugin:ADDED', { PLUGINS: message.args[0] });
+				if (settings.plugins.includes('Level')) await message.guild.fetchLevels();
 			} else {
 
 				const data = [];
@@ -83,6 +99,7 @@ module.exports = class SetPlugin extends Command {
 		} else {
 			return message.channel.send(message.translate('plugins/set-plugin:INVALID'));
 		}
-
 	}
-};
+}
+
+module.exports = SetPlugin;

@@ -2,14 +2,25 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class messageUpdate extends Event {
+/**
+ * Message update event
+ * @event Egglord#MessageUpdate
+ * @extends {Event}
+*/
+class MessageUpdate extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {Message} oldMessage The message before the update
+	 * @param {Message} newMessage The message after the update
+	 * @readonly
+	*/
 	async run(bot, oldMessage, newMessage) {
 		// For debugging
 		if (bot.config.debug) bot.logger.debug(`Message updated${!newMessage.guild ? '' : ` in guild: ${newMessage.guild.id}`}`);
@@ -34,7 +45,7 @@ module.exports = class messageUpdate extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event channelDelete is for logging
-		if (settings.ModLogEvents.includes('MESSAGEUPDATE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('MESSAGEUPDATE') && settings.ModLog) {
 			// shorten both messages when the content is larger then 1024 chars
 			let oldShortened = false;
 			let oldContent = oldMessage.content;
@@ -66,4 +77,6 @@ module.exports = class messageUpdate extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = MessageUpdate;

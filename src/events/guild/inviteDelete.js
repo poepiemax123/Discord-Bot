@@ -2,21 +2,31 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class inviteDelete extends Event {
+/**
+ * Invite delete event
+ * @event Egglord#InviteDelete
+ * @extends {Event}
+*/
+class InviteDelete extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {Invite} invite The invite that was deleted
+	 * @readonly
+	*/
 	async run(bot, invite) {
 		// Get server settings / if no settings then return
 		const settings = invite.guild.settings;
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event guildMemberAdd is for logging
-		if (settings.ModLogEvents.includes('INVITEDELETE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('INVITEDELETE') && settings.ModLog) {
 			const embed = new Embed(bot, invite.guild)
 				.setDescription('**Invite Deleted**')
 				.setColor(15158332)
@@ -32,4 +42,6 @@ module.exports = class inviteDelete extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = InviteDelete;

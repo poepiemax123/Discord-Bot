@@ -1,17 +1,30 @@
 // Dependencies
 const { Collection } = require('discord.js'),
 	{ Embed } = require('../../utils'),
-	{ time: { getReadableTime } } = require('../../utils'),
+	{ time: { getReadableTime }, functions: { genInviteLink } } = require('../../utils'),
+	{ TagsSchema } = require('../../database/models'),
+	AutoModeration = require('../../helpers/autoModeration'),
+	LevelManager = require('../../helpers/levelSystem'),
 	Event = require('../../structures/Event');
 
-module.exports = class Message extends Event {
+/**
+ * Message create event
+ * @event Egglord#MessageCreate
+ * @extends {Event}
+*/
+class MessageCreate extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {Message} message The message that ran the command
+	 * @readonly
+	*/
 	async run(bot, message) {
 		// record how many messages the bot see
 		bot.messagesSent++;
@@ -20,22 +33,23 @@ module.exports = class Message extends Event {
 		if (message.author.bot) return;
 
 		// Get server settings
-		const settings = message.guild?.settings ?? bot.config.defaultSettings;
+		const settings = message.guild?.settings ?? require('../../assets/json/defaultGuildSettings.json');
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if bot was mentioned
-		if ([`<@${bot.user.id}>`, `<@!${bot.user.id}>`].find(p => message.content == p)) {
+		if (message.content == `<@!${bot.user.id}>`) {
 			const embed = new Embed(bot, message.guild)
 				.setAuthor(bot.user.username, bot.user.displayAvatarURL({ format: 'png' }))
 				.setThumbnail(bot.user.displayAvatarURL({ format: 'png' }))
 				.setDescription([
-					`Hello, my name is ${bot.user.username}, and I'm a multi-purpose Discord bot, built to help you with all of your server problems and needs.`,
-					`I've been online for ${getReadableTime(bot.uptime)}, helping ${bot.guilds.cache.size} servers and ${bot.users.cache.size} users with ${bot.commands.size} commands.`,
+					message.translate('events/message:INTRO', { USER: bot.user.username }),
+					message.translate('events/message:INFO', { UPTIME: getReadableTime(bot.uptime), GUILDS: bot.guilds.cache.size, USERS: bot.guilds.cache.reduce((a, g) => a + g.memberCount, 0).toLocaleString(), CMDS: bot.commands.size }),
+					message.translate('events/message:PREFIX', { PREFIX: settings.prefix }),
 				].join('\n\n'))
-				.addField('Useful Links:', [
-					`[Add to server](${bot.config.inviteLink})`,
-					`[Join support server](${bot.config.SupportServer.link})`,
-					`[Website](${bot.config.websiteURL})`,
+				.addField(message.translate('events/message:LINKS'), [
+					message.translate('events/message:ADD', { INVITE: genInviteLink(bot) }),
+					message.translate('events/message:SUPPORT', { LINK: bot.config.SupportServer.link }),
+					message.translate('events/message:WEBSITE', { URL: bot.config.websiteURL }),
 				].join('\n'));
 			return message.channel.send({ embeds: [embed] });
 		}
@@ -43,21 +57,28 @@ module.exports = class Message extends Event {
 		// Check if the message was @someone
 		if (['@someone', '@person'].includes(message.content)) {
 			if (message.channel.type == 'dm') return message.channel.error('events/message:GUILD_ONLY');
+			await message.guild.members.fetch();
 			return message.channel.send({ embeds: [{ color: 'RANDOM', description:`Random user selected: ${message.guild.members.cache.random().user}.` }] });
 		}
 
 		// Check if message was a command
-		const args = message.content.split(' ');
-		if ([settings.prefix, `<@${bot.user.id}>`, `<@!${bot.user.id}>`].find(p => message.content.startsWith(p))) {
+		const args = message.content.split(/ +/);
+		if ([settings.prefix, `<@!${bot.user.id}>`].find(p => message.content.startsWith(p))) {
 			const command = args.shift().slice(settings.prefix.length).toLowerCase();
 			let cmd = bot.commands.get(command) || bot.commands.get(bot.aliases.get(command));
-			if (!cmd && [`<@${bot.user.id}>`, `<@!${bot.user.id}>`].find(p => message.content.startsWith(p))) {
+			if (!cmd && message.content.startsWith(`<@!${bot.user.id}>`)) {
 				// check to see if user is using mention as prefix
 				cmd = bot.commands.get(args[0]) || bot.commands.get(bot.aliases.get(args[0]));
 				args.shift();
 				if (!cmd) return;
 			} else if (!cmd) {
-				return;
+				const tag = message.guild.guildTags.find(result => result.toLowerCase() == command);
+				if (tag) {
+					const response = await TagsSchema.find({ guildID: message.guild.id, name: tag });
+					return message.channel.send(response[0].response);
+				} else {
+					return;
+				}
 			}
 			message.args = args;
 
@@ -68,9 +89,9 @@ module.exports = class Message extends Event {
 			}
 
 			// Make sure guild only commands are done in the guild only
-			if (message.guild && cmd.guildOnly) {
+			if (!message.guild && cmd.conf.guildOnly) {
 				if (message.deletable) message.delete();
-				return message.channel.error('event/message:GUILD_ONLY').then(m => m.timedDelete({ timeout: 5000 }));
+				return message.channel.error('events/message:GUILD_ONLY').then(m => m.timedDelete({ timeout: 5000 }));
 			}
 
 			// Check to see if the command is being run in a blacklisted channel
@@ -93,9 +114,6 @@ module.exports = class Message extends Event {
 				if (message.deletable) message.delete();
 				return message.channel.send('Nice try').then(m => m.timedDelete({ timeout:5000 }));
 			}
-
-			// Check if command is disabled
-			if ((message.channel.type != 'dm') && (settings.DisabledCommands.includes(cmd.name))) return;
 
 			// check permissions
 			if (message.guild) {
@@ -161,15 +179,18 @@ module.exports = class Message extends Event {
 		} else if (message.guild) {
 			if (settings.plugins.includes('Moderation')) {
 				try {
-					const check = require('../../helpers/autoModeration').run(bot, message, settings);
+					const moderated = await new AutoModeration(bot, message).check();
 					// This makes sure that if the auto-mod punished member, level plugin would not give XP
-					if (settings.plugins.includes('Level') && check) return require('../../helpers/levelSystem').run(bot, message, settings);
+					if (settings.plugins.includes('Level') && !moderated) return new LevelManager(bot, message).check();
 				} catch (err) {
+					console.log(err);
 					bot.logger.error(`Event: 'message' has error: ${err.message}.`);
 				}
 			} else if (settings.plugins.includes('Level')) {
-				require('../../helpers/levelSystem').run(bot, message, settings);
+				new LevelManager(bot, message).check();
 			}
 		}
 	}
-};
+}
+
+module.exports = MessageCreate;

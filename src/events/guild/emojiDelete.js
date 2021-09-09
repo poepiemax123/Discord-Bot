@@ -2,14 +2,24 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class emojiDelete extends Event {
+/**
+ * Emoji delete event
+ * @event Egglord#EmojiDelete
+ * @extends {Event}
+*/
+class EmojiDelete extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {GuildEmoji} emoji The emoji that was deleted
+	 * @readonly
+	*/
 	async run(bot, emoji) {
 	// For debugging
 		if (bot.config.debug) bot.logger.debug(`Emoji: ${emoji.name} has been deleted in guild: ${emoji.guild.id}.`);
@@ -19,7 +29,7 @@ module.exports = class emojiDelete extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event emojiDelete is for logging
-		if (settings.ModLogEvents.includes('EMOJIDELETE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('EMOJIDELETE') && settings.ModLog) {
 			const embed = new Embed(bot, emoji.guild)
 				.setDescription(`**Emoji: ${emoji} (${emoji.name}) was deleted**`)
 				.setColor(15158332)
@@ -36,4 +46,6 @@ module.exports = class emojiDelete extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = EmojiDelete;

@@ -2,20 +2,31 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class ticketClose extends Event {
+/**
+ * Ticket close event
+ * @event Egglord#TickteClose
+ * @extends {Event}
+*/
+class TicketClose extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {TextChannel} channel The ticket channel that closed
+	 * @readonly
+	*/
 	async run(bot, channel) {
 		// Get server settings / if no settings then return
 		const settings = channel.guild.settings;
 		if (Object.keys(settings).length == 0) return;
 
 		// send ticket log (goes in ModLog channel)
-		if (settings.ModLogEvents.includes('TICKET') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('TICKET') && settings.ModLog) {
 			const embed = new Embed(bot, channel.guild)
 				.setTitle('ticket/ticket-close:TITLE')
 				.setColor(15158332)
@@ -32,4 +43,6 @@ module.exports = class ticketClose extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = TicketClose;

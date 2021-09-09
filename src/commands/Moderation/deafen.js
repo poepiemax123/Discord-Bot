@@ -1,7 +1,15 @@
 // Dependencies
 const Command = require('../../structures/Command.js');
 
-module.exports = class Deafen extends Command {
+/**
+ * Deafen command
+ * @extends {Command}
+*/
+class Deafen extends Command {
+	/**
+ 	 * @param {Client} client The instantiating client
+ 	 * @param {CommandData} data The data for the command
+	*/
 	constructor(bot) {
 		super(bot, {
 			name: 'deafen',
@@ -16,13 +24,26 @@ module.exports = class Deafen extends Command {
 		});
 	}
 
-	// Function for message command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+	*/
 	async run(bot, message, settings) {
 		// Delete message
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
 
-		// Checks to make sure user is in the server
-		const members = await message.getMember();
+		// check if a user was entered
+		if (!message.args[0]) return message.channel.error('misc:INCORRECT_FORMAT', { EXAMPLE: settings.prefix.concat(message.translate('moderation/deafen:USAGE')) }).then(m => m.timedDelete({ timeout: 10000 }));
+
+
+		// Get members mentioned in message
+		const members = await message.getMember(false);
+
+		// Make sure atleast a guildmember was found
+		if (!members[0]) return message.channel.error('moderation/ban:MISSING_USER').then(m => m.timedDelete({ timeout: 10000 }));
 
 		// Make sure that the user is in a voice channel
 		if (members[0]?.voice.channel) {
@@ -47,4 +68,6 @@ module.exports = class Deafen extends Command {
 			message.channel.error('moderation/deafen:NOT_VC');
 		}
 	}
-};
+}
+
+module.exports = Deafen;

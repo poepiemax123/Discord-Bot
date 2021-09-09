@@ -2,7 +2,15 @@
 const { Embed } = require('../../utils'),
 	Command = require('../../structures/Command.js');
 
-module.exports = class Poll extends Command {
+/**
+ * Poll command
+ * @extends {Command}
+*/
+class Poll extends Command {
+	/**
+   * @param {Client} client The instantiating client
+   * @param {CommandData} data The data for the command
+  */
 	constructor(bot) {
 		super(bot, {
 			name:  'poll',
@@ -16,7 +24,13 @@ module.exports = class Poll extends Command {
 		});
 	}
 
-	// Function for message command
+	/**
+	 * Function for recieving message.
+	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+	*/
 	async run(bot, message, settings) {
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
 
@@ -34,4 +48,6 @@ module.exports = class Poll extends Command {
 			await msg.react('❌');
 		});
 	}
-};
+}
+
+module.exports = Poll;

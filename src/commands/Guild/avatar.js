@@ -2,7 +2,15 @@
 const { Embed } = require('../../utils'),
 	Command = require('../../structures/Command.js');
 
-module.exports = class Avatar extends Command {
+/**
+ * Avatar command
+ * @extends {Command}
+*/
+class Avatar extends Command {
+	/**
+   * @param {Client} client The instantiating client
+   * @param {CommandData} data The data for the command
+  */
 	constructor(bot) {
 		super(bot, {
 			name: 'avatar',
@@ -17,14 +25,19 @@ module.exports = class Avatar extends Command {
 			slash: true,
 			options: [{
 				name: 'user',
-				description: 'The user you want to grab the avatar of.',
+				description: 'The user you want the avatar of',
 				type: 'USER',
 				required: false,
 			}],
 		});
 	}
 
-	// Function for message command
+	/**
+	 * Function for recieving message.
+	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+ 	 * @readonly
+	*/
 	async run(bot, message) {
 		// Get avatar embed
 		const members = await message.getMember();
@@ -34,16 +47,45 @@ module.exports = class Avatar extends Command {
 		message.channel.send({ embeds: [embed] });
 	}
 
-	// Function for slash command
+	/**
+ 	 * Function for recieving slash command.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {interaction} interaction The interaction that ran the command
+ 	 * @param {guild} guild The guild the interaction ran in
+	 * @param {args} args The options provided in the command, if any
+ 	 * @readonly
+	*/
 	async callback(bot, interaction, guild, args) {
 		const member = guild.members.cache.get(args.get('user')?.value ?? interaction.user.id);
 		const embed = this.avatarEmbed(bot, guild, member);
 
 		// send embed
-		return bot.send(interaction, { embeds: [embed] });
+		return interaction.reply({ embeds: [embed] });
 	}
 
-	// create avatar embed
+	/**
+	 * Function for recieving context menu
+	 * @param {bot} bot The instantiating client
+	 * @param {interaction} interaction The interaction that ran the command
+	 * @param {guild} guild The guild the interaction ran in
+	 * @param {args} args The options provided in the command, if any
+	 * @readonly
+	*/
+	reply(bot, interaction, channel, userID) {
+		const member = channel.guild.members.cache.get(userID);
+		const embed = this.avatarEmbed(bot, channel.guild, member);
+
+		// send embed
+		return interaction.reply({ embeds: [embed] });
+	}
+
+	/**
+	 * Function for creating avatar embed.
+	 * @param {bot} bot The instantiating client
+	 * @param {guild} guild The guild the command ran in
+	 * @param {member} GuildMember The guildMember to get the avatar from
+	 * @returns {embed}
+	*/
 	avatarEmbed(bot, guild, member) {
 		return new Embed(bot, guild)
 			.setTitle('guild/avatar:AVATAR_TITLE', { USER: member.user.tag })
@@ -53,4 +95,6 @@ module.exports = class Avatar extends Command {
 			].join('\n'))
 			.setImage(`${member.user.displayAvatarURL({ dynamic: true, size: 1024 })}`);
 	}
-};
+}
+
+module.exports = Avatar;

@@ -3,10 +3,19 @@ const { Embed } = require('../../utils'),
 	{ TagsSchema } = require('../../database/models/index.js'),
 	Command = require('../../structures/Command.js');
 
-module.exports = class TagView extends Command {
+/**
+ * Tag view command
+ * @extends {Command}
+*/
+class TagView extends Command {
+	/**
+ 	 * @param {Client} client The instantiating client
+ 	 * @param {CommandData} data The data for the command
+	*/
 	constructor(bot) {
 		super(bot, {
 			name: 'tag-view',
+			guildOnly: true,
 			dirname: __dirname,
 			aliases: ['t-view'],
 			userPermissions: ['MANAGE_GUILD'],
@@ -18,7 +27,13 @@ module.exports = class TagView extends Command {
 		});
 	}
 
-	// Run command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+	*/
 	async run(bot, message) {
 		// view all tags on the server
 		TagsSchema.find({ guildID: message.guild.id }).then(result => {
@@ -46,4 +61,6 @@ module.exports = class TagView extends Command {
 			}
 		});
 	}
-};
+}
+
+module.exports = TagView;

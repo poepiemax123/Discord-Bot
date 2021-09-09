@@ -2,14 +2,24 @@
 const { Embed } = require('../../utils'),
 	Event = require('../../structures/Event');
 
-module.exports = class roleDelete extends Event {
+/**
+ * Role delete event
+ * @event Egglord#RoleDelete
+ * @extends {Event}
+*/
+class RoleDelete extends Event {
 	constructor(...args) {
 		super(...args, {
 			dirname: __dirname,
 		});
 	}
 
-	// run event
+	/**
+	 * Function for recieving event.
+	 * @param {bot} bot The instantiating client
+	 * @param {Role} role The role that was deleted
+	 * @readonly
+	*/
 	async run(bot, role) {
 		// For debugging
 		if (bot.config.debug) bot.logger.debug(`Role: ${role.name} has been deleted in guild: ${role.guild.id}.`);
@@ -19,7 +29,7 @@ module.exports = class roleDelete extends Event {
 		if (Object.keys(settings).length == 0) return;
 
 		// Check if event roleDelete is for logging
-		if (settings.ModLogEvents.includes('ROLEDELETE') && settings.ModLog) {
+		if (settings.ModLogEvents?.includes('ROLEDELETE') && settings.ModLog) {
 			const embed = new Embed(bot, role.guild)
 				.setDescription(`**Role: ${role} (${role.name}) was deleted**`)
 				.setColor(15158332)
@@ -36,4 +46,6 @@ module.exports = class roleDelete extends Event {
 			}
 		}
 	}
-};
+}
+
+module.exports = RoleDelete;

@@ -2,7 +2,15 @@
 const Command = require('../../structures/Command.js'),
 	{ ReactionRoleSchema } = require('../../database/models');
 
-module.exports = class ReactionRoleRemove extends Command {
+/**
+ * Reaction role remove command
+ * @extends {Command}
+*/
+class ReactionRoleRemove extends Command {
+	/**
+ 	 * @param {Client} client The instantiating client
+ 	 * @param {CommandData} data The data for the command
+	*/
 	constructor(bot) {
 		super(bot, {
 			name: 'rr-remove',
@@ -18,7 +26,13 @@ module.exports = class ReactionRoleRemove extends Command {
 		});
 	}
 
-	// Run command
+	/**
+ 	 * Function for recieving message.
+ 	 * @param {bot} bot The instantiating client
+ 	 * @param {message} message The message that ran the command
+	 * @param {settings} settings The settings of the channel the command ran in
+ 	 * @readonly
+  */
 	async run(bot, message, settings) {
 		// Delete message
 		if (settings.ModerationClearToggle && message.deletable) message.delete();
@@ -53,4 +67,6 @@ module.exports = class ReactionRoleRemove extends Command {
 			return message.channel.error('misc:ERROR_MESSAGE', { ERROR: err.message }).then(m => m.timedDelete({ timeout: 5000 }));
 		}
 	}
-};
+}
+
+module.exports = ReactionRoleRemove;
